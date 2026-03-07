@@ -19,7 +19,6 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="google-signin-client_id" content="697508222834-1uf9q9n8ls7dam7d1dks78rmj7u6qqc9.apps.googleusercontent.com">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -32,6 +31,12 @@
 
   <title>Inventory</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Required for Microsoft Authentication (aad_oauth) on Web -->
+  <script type="text/javascript" src="https://alcdn.msauth.net/browser/2.13.1/js/msal-browser.min.js"
+    integrity="sha384-2Vr9MyareT7qv+wLp1zBt78ZWB4aljfCTMUrml3/cxm0W81ahmDOC6uyNmmn0Vrc"
+    crossorigin="anonymous"></script>
+  <script src="assets/packages/aad_oauth/assets/msalv2.js"></script>
 </head>
 <body>
   <!--

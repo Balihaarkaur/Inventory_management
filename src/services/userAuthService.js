@@ -77,10 +77,16 @@ async function handleMicrosoftLogin(accessToken) {
     
     // Default organization lock
     const allowedDomain = process.env.ALLOWED_DOMAIN || 'blauplug.com';
-    const allowedTestEmail = process.env.ALLOWED_TEST_EMAIL; 
+    const isAllowedDomain = email.endsWith(`@${allowedDomain}`);
+    const isAllowedTestEmail = email.toLowerCase() === (process.env.ALLOWED_TEST_EMAIL || '').toLowerCase();
     
+    if (isAllowedTestEmail) {
+        console.log(`[AUTH] Bypassing domain check for allowed test email: ${email}`);
+    }
+
     // Domain Check 
-    if (!email.endsWith(`@${allowedDomain}`) && email !== allowedTestEmail) {
+    if (!isAllowedDomain && !isAllowedTestEmail) {
+        console.warn(`[AUTH] Unauthorized domain login attempt: ${email}`);
         throw new Error(`Only @${allowedDomain} and authorized testing emails are allowed`);
     }
 
