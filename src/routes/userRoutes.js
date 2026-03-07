@@ -25,6 +25,28 @@ router.post('/login', async (req, res) => {
     }
 });
 
+router.post('/google-login', async (req, res) => {
+    try {
+        const { idToken } = req.body;
+        if (!idToken) {
+            return res.status(400).json({ success: false, message: 'ID Token is required' });
+        }
+
+        const result = await userAuthService.handleGoogleLogin(idToken);
+
+        res.status(200).json({
+            success: true,
+            action: result.action,
+            user: result.user
+        });
+    } catch (err) {
+        res.status(400).json({
+            success: false,
+            message: err.message
+        });
+    }
+});
+
 router.get('/', async (req, res) => {
     try {
         const users = await userService.getAllUsers();

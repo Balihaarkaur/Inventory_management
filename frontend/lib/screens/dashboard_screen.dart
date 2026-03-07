@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'scan_hardware_screen.dart';
 import '../services/api_service.dart';
 
@@ -58,6 +59,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  // Define warehouse coordinates 
+  final Map<int, Map<String, dynamic>> _warehouseLocations = {
+    1: {'name': 'Pune', 'lat': 18.5204, 'lng': 73.8567},
+    2: {'name': 'Mumbai', 'lat': 19.0760, 'lng': 72.8777},
+    3: {'name': 'Bangalore', 'lat': 12.9716, 'lng': 77.5946},
+  };
+  
+  // Acceptable radius in meters (e.g., 100km for demo purposes, adjust as needed)
+  final double _allowedRadiusMeters = 100000;
+
   Future<void> _detectLocation() async {
     setState(() {
        _isLoading = true;
@@ -72,19 +83,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
       }
 
-      await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.medium);
+      Position? position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.medium,
+            timeLimit: const Duration(seconds: 10)); // Add timeout to prevent infinite web loading
+      } catch (locationError) {
+        throw Exception("Could not get GPS lock. Please ensure location services are enabled.");
+      }
       
-      // Since mapping GPS to internal Stock ID needs custom logic offline/online, 
-      // let's default populate a sample ID or prompt.
-      setState(() {
-         _selectedLocationId = 2; // Mock location Mumbai (ID 2)
+      if (position == null) {
+          throw Exception("Received null position from GPS.");
+      }
+
+      int? nearestLocationId;
+      double shortestDistance = double.infinity;
+      String nearestLocationName = "";
+
+      // Calculate distance to each warehouse
+      _warehouseLocations.forEach((id, loc) {
+        double distanceInMeters = Geolocator.distanceBetween(
+          position!.latitude, 
+          position.longitude, 
+          loc['lat'] as double, 
+          loc['lng'] as double
+        );
+
+        if (distanceInMeters < shortestDistance) {
+          shortestDistance = distanceInMeters;
+          if (distanceInMeters <= _allowedRadiusMeters) {
+             nearestLocationId = id;
+             nearestLocationName = loc['name'] as String;
+          }
+        }
       });
       
       if (mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(
-           const SnackBar(content: Text('Detected nearby location: Mumbai'), backgroundColor: Colors.green),
-         );
+        if (nearestLocationId != null) {
+          setState(() {
+             _selectedLocationId = nearestLocationId;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Detected nearby location: $nearestLocationName'), backgroundColor: Colors.green),
+          );
+        } else {
+          // Nearest location is outside the allowed radius
+          setState(() {
+             _selectedLocationId = null; 
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No inventory warehouse found near your current location.'), backgroundColor: Colors.red),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -147,125 +197,199 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Inventory Dashboard', 
-          style: TextStyle(fontWeight: FontWeight.w500)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        title: Text('Inventory Workspace', 
+          style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.black87, fontSize: 18)),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        centerTitle: false,
+        iconTheme: const IconThemeData(color: Colors.black87),
       ),
       body: SafeArea(
         child: _isLoading 
         ? const Center(child: CircularProgressIndicator(color: Color(0xFF5eb052)))
-        : Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildStepTitle('Step 1 – Scan Hardware'),
-              const SizedBox(height: 12),
-              _buildOutlineButton(
-                icon: Icons.qr_code_scanner, 
-                label: _hardwareData != null ? 'Scanned: ${_hardwareData!['hardware_name']}' : 'Scan Hardware', 
-                onTap: _navigateToScan,
-              ),
-              const SizedBox(height: 32),
-              
-              _buildStepTitle('Step 2 – Detect Current Location'),
-              const SizedBox(height: 12),
-              _buildOutlineButton(
-                icon: Icons.location_on, 
-                label: 'Detect Location', 
-                onTap: _detectLocation,
-              ),
-              const SizedBox(height: 32),
-              
-              _buildStepTitle('Select Location'),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<int>(
-                value: _selectedLocationId,
-                hint: Text('Choose a location', style: TextStyle(color: Colors.grey.shade600)),
-                items: const [
-                  DropdownMenuItem(value: 1, child: Text('Pune')),
-                  DropdownMenuItem(value: 2, child: Text('Mumbai')),
-                  DropdownMenuItem(value: 3, child: Text('Bangalore')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _selectedLocationId = value;
-                  });
-                },
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade400),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade400),
-                  ),
-                ),
-              ),
-              const Spacer(),
-              
-              ElevatedButton(
-                onPressed: _markLocation,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF5eb052), // Green from UI
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                child: const Text('Mark Location'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+        : Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Workflow Header
+                    Text(
+                      "Location Assignment",
+                      style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Scan a piece of hardware and link it to its physical warehouse location using GPS.",
+                      style: GoogleFonts.inter(fontSize: 15, color: Colors.grey.shade600, height: 1.5),
+                    ),
+                    const SizedBox(height: 40),
 
-  Widget _buildStepTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: Colors.black87,
-      ),
-    );
-  }
+                    // Card 1: Scanning
+                    _buildStepCard(
+                      stepNumber: 1,
+                      title: 'Identify Hardware',
+                      description: 'Scan the barcode on the hardware item.',
+                      icon: Icons.qr_code_scanner_rounded,
+                      isDone: _hardwareData != null,
+                      content: [
+                        if (_hardwareData != null) ...[
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(12)),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.check_circle, color: Colors.green),
+                                const SizedBox(width: 12),
+                                Expanded(child: Text("Scanned: ${_hardwareData!['hardware_name']}", style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.green.shade700))),
+                              ]
+                            )
+                          ),
+                        ],
+                        ElevatedButton.icon(
+                          onPressed: _navigateToScan,
+                          icon: const Icon(Icons.camera_alt_outlined),
+                          label: Text(_hardwareData != null ? 'Scan Different Item' : 'Open Camera Scanner'),
+                          style: _actionButtonStyle(isPrimary: _hardwareData == null),
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 24),
 
-  Widget _buildOutlineButton({required IconData icon, required String label, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF6F4FB),
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: const Color(0xFF6B5B95)), // Purple tint
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Color(0xFF6B5B95),
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
+                    // Card 2: GPS
+                    _buildStepCard(
+                      stepNumber: 2,
+                      title: 'Verify Location',
+                      description: 'Detect your physical coordinates to unlock the nearest warehouse.',
+                      icon: Icons.my_location_rounded,
+                      isDone: _selectedLocationId != null,
+                      content: [
+                        ElevatedButton.icon(
+                          onPressed: _detectLocation,
+                          icon: const Icon(Icons.gps_fixed),
+                          label: const Text('Detect GPS Coordinates'),
+                          style: _actionButtonStyle(isPrimary: _hardwareData != null && _selectedLocationId == null),
+                        ),
+                        const SizedBox(height: 24),
+                        // Locked Dropdown
+                        InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: 'Detected Warehouse',
+                            labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w500, color: Colors.grey.shade700),
+                            filled: true,
+                            fillColor: _selectedLocationId != null ? Colors.white : Colors.grey.shade100,
+                            prefixIcon: Icon(_selectedLocationId != null ? Icons.domain_verification : Icons.lock_outline, 
+                                             color: _selectedLocationId != null ? Colors.green : Colors.grey.shade500),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                          ),
+                          child: Text(
+                            _selectedLocationId != null 
+                              ? _warehouseLocations[_selectedLocationId]!['name'] as String 
+                              : 'Waiting for GPS lock...',
+                            style: GoogleFonts.inter(
+                              fontSize: 16, 
+                              fontWeight: _selectedLocationId != null ? FontWeight.bold : FontWeight.normal,
+                              color: _selectedLocationId != null ? Colors.black87 : Colors.grey.shade500
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 48),
+
+                    // Card 3: Submit Location Assignment
+                    _buildStepCard(
+                      stepNumber: 3,
+                      title: 'Finalize Assignment',
+                      description: 'Link the scanned hardware item securely to the verified GPS location.',
+                      icon: Icons.cloud_upload_rounded,
+                      isDone: false, // You could toggle this to true right before clearing, but since it clears instantly, false is fine
+                      content: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: (_hardwareData != null && _selectedLocationId != null) ? _markLocation : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF5eb052),
+                              disabledBackgroundColor: Colors.grey.shade300,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              elevation: 0,
+                            ),
+                            child: Text('Complete Assignment', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 48),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
+          ),
       ),
+    );
+  }
+
+  Widget _buildStepCard({required int stepNumber, required String title, required String description, required IconData icon, required bool isDone, required List<Widget> content}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 4)),
+        ],
+        border: Border.all(color: isDone ? Colors.green.shade300 : Colors.transparent, width: 2),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48, height: 48,
+                decoration: BoxDecoration(
+                  color: isDone ? Colors.green.shade50 : const Color(0xFFF6F4FB),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Center(child: Icon(isDone ? Icons.check : icon, color: isDone ? Colors.green : const Color(0xFF6B5B95), size: 24)),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Step $stepNumber: $title", style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black87)),
+                    const SizedBox(height: 6),
+                    Text(description, style: GoogleFonts.inter(fontSize: 14, color: Colors.grey.shade600, height: 1.4)),
+                  ],
+                )
+              )
+            ],
+          ),
+          const SizedBox(height: 24),
+          ...content,
+        ],
+      )
+    );
+  }
+
+  ButtonStyle _actionButtonStyle({required bool isPrimary}) {
+    return ElevatedButton.styleFrom(
+      backgroundColor: isPrimary ? const Color(0xFF6B5B95) : Colors.grey.shade100,
+      foregroundColor: isPrimary ? Colors.white : Colors.black87,
+      elevation: 0,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      textStyle: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600),
     );
   }
 }
