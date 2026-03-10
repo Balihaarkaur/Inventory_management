@@ -1,15 +1,23 @@
 {
   "name": "inventory_management",
   "version": "1.0.0",
-  "description": "This directory contains the SQL scripts and configuration examples for setting up the PostgreSQL database for the Hardware Tracking System.",
+  "description": "Enterprise Hardware Inventory Management System with SaaS Dashboard and Barcode Scanner.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "inventory",
+    "hardware",
+    "management",
+    "barcode",
+    "scanner",
+    "postgres",
+    "node"
+  ],
+  "author": "BlauPlug",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
