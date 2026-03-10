@@ -51,11 +51,10 @@ PORT=3000
 ### 3. Flutter Frontend Configuration
 The frontend needs to know where your backend API lives and what your Microsoft Client ID is.
 
-1. **API Connection (`frontend/lib/services/api_service.dart`)**:
-   Point this to your local server IP (e.g., `http://192.168.1.xxx:3000/api`) or your live deployed cloud URL (e.g., `https://your-production-backend.onrender.com/api`).
-   ```dart
-   static const String baseUrl = 'https://your-production-backend.onrender.com/api';
-   ```
+    Point this to your local server IP (e.g., `http://192.168.1.xxx:3000/api`) or your live deployed cloud URL (e.g., `https://inventory-management-oadl.onrender.com/api`).
+    ```dart
+    static const String baseUrl = 'https://inventory-management-oadl.onrender.com/api';
+    ```
 
 2. **Auth Intercept (`frontend/lib/screens/login_screen.dart`)**:
    Update the `Config` block in the login screen so Flutter can ping your Azure App.
