@@ -17,14 +17,14 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   static final auth_config.Config config = auth_config.Config(
-    tenant: 'common', // Replace with your Tenant ID if strictly single-tenant
+    tenant: 'common', 
     clientId: '0cde56fa-1ae9-4e58-a23f-1df78dffe979', 
     scope: 'openid profile offline_access User.Read',
     redirectUri: kIsWeb 
-        ? 'http://localhost:5173' 
-        : 'msauth://com.example.frontend/uAjnB1SZZB2oraYMvM%2BT71AFJTw%3D', 
+        ? 'https://inventory-management-oadl.onrender.com/' 
+        : 'msauth://com.blauplug.inventory/uAjnB1SZZB2oraYMvM%2BT71AFJTw%3D', 
     navigatorKey: navigatorKey,
-    webUseRedirect: false, // True if you want a full-page redirect instead of popup
+    webUseRedirect: false, 
   );
   
   final AadOAuth oauth = AadOAuth(config);
@@ -55,8 +55,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _authenticateWithBackend(String accessToken) async {
-    // Call the live Render URL for global access
-    const String apiUrl = 'https://inventory-management-oadl.onrender.com/api/users/microsoft-login'; 
+    print('🔑 Attempting backend authentication...');
+    final String apiUrl = '${ApiService.baseUrl}/users/microsoft-login'; 
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
@@ -64,9 +64,13 @@ class _LoginScreenState extends State<LoginScreen> {
         body: jsonEncode({'accessToken': accessToken}),
       );
 
+      print('📡 Backend Response Code: ${response.statusCode}');
+      print('📡 Backend Response Body: ${response.body}');
+
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['success'] == true) {
+        print('✅ Auth Success!');
         if (mounted) {
           Navigator.pushReplacement(
             context,
@@ -74,10 +78,13 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else {
-        _showError(data['message'] ?? 'Authentication failed');
+        final errorMsg = data['message'] ?? 'Authentication failed';
+        print('❌ Auth Failed: $errorMsg');
+        _showError(errorMsg);
         await oauth.logout();
       }
     } catch (e) {
+      print('❌ Network/CORS Error: $e');
       _showError('Error connecting to backend: $e');
       await oauth.logout();
     }

@@ -35,7 +35,7 @@ The platform is locked to Microsoft Organizational accounts. You must generate y
 1. Go to the [Azure Portal](https://portal.azure.com/).
 2. Search for **App Registrations** and click **New registration**.
 3. Name it (e.g., "Hardware Tracker SSO"). Choose your supported account types (Single Tenant or Multi-Tenant).
-4. For the **Redirect URI**, select **Single-page application (SPA)** and enter `http://localhost:5173/` for local testing.
+4. For the **Redirect URI**, select **Single-page application (SPA)** and enter `https://inventory-management-oadl.onrender.com/` for production.
 5. Once created, copy the **Application (client) ID** and the **Directory (tenant) ID**.
 
 **Update the Backend Environment Variables:**

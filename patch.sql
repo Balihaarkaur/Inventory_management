@@ -5,6 +5,7 @@ SET ROLE hardware_admin;
 
 -- Drop constraints that might conflict
 ALTER TABLE hardware_history DROP CONSTRAINT IF EXISTS hardware_history_h_id_fkey;
+ALTER TABLE hardware_history DROP CONSTRAINT IF EXISTS hardware_history_moved_by_fkey;
 
 -- Rename and update columns in hardware table
 ALTER TABLE hardware RENAME COLUMN h_id TO hardware_id;

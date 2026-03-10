@@ -63,23 +63,28 @@ async function handleMicrosoftLogin(accessToken) {
                 Authorization: `Bearer ${accessToken}`
             }
         });
-        
+
         // Microsoft returns the email in either 'mail' or 'userPrincipalName'
         const rawEmail = userInfoResponse.data.mail || userInfoResponse.data.userPrincipalName;
         if (!rawEmail) {
             throw new Error("No email found in Microsoft profile.");
         }
         email = rawEmail.toLowerCase();
-        
+
     } catch (error) {
+        console.error('[AUTH] Graph API Error:', error.response?.data || error.message);
         throw new Error("Invalid Microsoft Token or Graph API rejection.");
     }
-    
+
     // Default organization lock
     const allowedDomain = process.env.ALLOWED_DOMAIN || 'blauplug.com';
     const isAllowedDomain = email.endsWith(`@${allowedDomain}`);
     const isAllowedTestEmail = email.toLowerCase() === (process.env.ALLOWED_TEST_EMAIL || '').toLowerCase();
-    
+
+    console.log(`[AUTH] User Email: ${email}`);
+    console.log(`[AUTH] Allowed Domain: ${allowedDomain}`);
+    console.log(`[AUTH] Is Allowed Domain: ${isAllowedDomain}`);
+
     if (isAllowedTestEmail) {
         console.log(`[AUTH] Bypassing domain check for allowed test email: ${email}`);
     }
