@@ -7,6 +7,7 @@ import 'package:aad_oauth/model/config.dart' as auth_config;
 import 'package:http/http.dart' as http;
 import '../main.dart';
 import 'dashboard_screen.dart';
+import '../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
     clientId: '0cde56fa-1ae9-4e58-a23f-1df78dffe979', 
     scope: 'openid profile offline_access User.Read',
     redirectUri: kIsWeb 
-        ? 'https://inventory-management-oadl.onrender.com/' 
+        ? 'http://localhost:5173/' 
         : 'msauth://com.blauplug.inventory/uAjnB1SZZB2oraYMvM%2BT71AFJTw%3D', 
     navigatorKey: navigatorKey,
     webUseRedirect: false, 
