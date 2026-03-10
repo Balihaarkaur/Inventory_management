@@ -41,9 +41,9 @@ The platform is locked to Microsoft Organizational accounts. You must generate y
 **Update the Backend Environment Variables:**
 Add the Azure credentials to your `.env` file to enforce organizational locking:
 ```env
-MICROSOFT_CLIENT_ID="your_azure_client_id_here"
-MICROSOFT_TENANT_ID="common" # Or your specific Tenant ID
-ALLOWED_DOMAIN="yourcompany.com" # Locks login to this domain
+MICROSOFT_CLIENT_ID="0cde56fa-1ae9-4e58-a23f-1df78dffe979"
+MICROSOFT_TENANT_ID="common"
+ALLOWED_DOMAIN="blauplug.com"
 ALLOWED_TEST_EMAIL="your_personal_test_email@outlook.com" # Bypass for testing
 PORT=3000
 ```
@@ -62,7 +62,7 @@ The frontend needs to know where your backend API lives and what your Microsoft 
    ```dart
    final Config config = Config(
       tenant: 'common', 
-      clientId: 'YOUR_AZURE_CLIENT_ID_HERE', // Inject your Client ID
+      clientId: '0cde56fa-1ae9-4e58-a23f-1df78dffe979', 
       scope: 'openid profile email User.Read',
       redirectUri: kIsWeb ? 'http://localhost:5173/' : 'msauth://com.inventory.app/signature',
       navigatorKey: navigatorKey,

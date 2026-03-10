@@ -47,6 +47,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Add email column to users if it doesn't exist
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255) UNIQUE;
+
 -- Insert mock user, required by frontend 'markLocation'
 INSERT INTO users (user_id, u_name, email) VALUES (1, 'mock_user', 'mock@example.com') ON CONFLICT DO NOTHING;
 
