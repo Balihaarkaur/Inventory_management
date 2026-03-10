@@ -56,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _authenticateWithBackend(String accessToken) async {
     // Call the live Render URL for global access
-    const String apiUrl = 'https://inventory-management-p8tg.onrender.com/api/users/microsoft-login'; 
+    const String apiUrl = 'https://inventory-management-oadl.onrender.com/api/users/microsoft-login'; 
     try {
       final response = await http.post(
         Uri.parse(apiUrl),

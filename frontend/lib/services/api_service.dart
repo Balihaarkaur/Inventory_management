@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   // Live render URL for global connections
-  static const String baseUrl = 'https://inventory-management-p8tg.onrender.com/api';
+  static const String baseUrl = 'https://inventory-management-oadl.onrender.com/api';
 
   static Future<Map<String, dynamic>> scanHardware(String barcode) async {
     try {
